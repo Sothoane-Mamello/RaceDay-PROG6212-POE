@@ -1,30 +1,36 @@
 
+using Microsoft.EntityFrameworkCore;
+using RaceDay.Api.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add controllers
+// Controllers
 builder.Services.AddControllers();
 
-// Configure Swagger
+// Swagger documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// SQL Server database connection
+builder.Services.AddDbContext<RaceDayDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("RaceDayConnection")
+    ));
+
 var app = builder.Build();
 
-// Enable Swagger during development
+// Swagger for development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// HTTPS redirection temporarily disabled for local testing
+// HTTPS redirection temporarily disabled for local development
 // app.UseHttpsRedirection();
 
-// Enable authorization middleware
 app.UseAuthorization();
 
-// Map API controllers
 app.MapControllers();
 
-// Start the application
 app.Run();
