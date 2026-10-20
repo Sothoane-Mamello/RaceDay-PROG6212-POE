@@ -1,0 +1,28 @@
+﻿name: RaceDay .NET CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RaceDay/RaceDay.sln
+
+      - name: Build solution
+        run: dotnet build RaceDay/RaceDay.sln --configuration Release --no-restore
+
+      - name: Run automated tests
+        run: dotnet test RaceDay/RaceDay.sln --configuration Release --no-build
