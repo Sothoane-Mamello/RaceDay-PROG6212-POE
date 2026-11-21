@@ -1,76 +1,74 @@
 
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
-using RaceDay.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
-builder.Services.AddControllers();
+// Add MVC controllers and views
+builder.Services.AddControllersWithViews();
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Enable session management
+builder.Services.AddDistributedMemoryCache();
 
-// SQL Server database
-builder.Services.AddDbContext<RaceDayDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString(
-            "RaceDayConnection"
-        )
-    )
-);
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
 
-// Cookie authentication
+// Connect MVC to RaceDay Part 2 API
+builder.Services.AddHttpClient("RaceDayApi", client =>
+{
+    var apiUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException(
+            "API BaseUrl is missing.");
+
+    client.BaseAddress = new Uri(apiUrl);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+    new HttpClientHandler
+    {
+        UseCookies = false,
+        AllowAutoRedirect = false
+    });
+
+// MVC authentication
 builder.Services
     .AddAuthentication(
-        CookieAuthenticationDefaults.AuthenticationScheme
-    )
+        CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.Cookie.Name = "RaceDayAuth";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/AccessDenied";
 
-        // Allows local HTTP testing.
-        // Production must use HTTPS and secure cookies.
+        options.Cookie.Name = "RaceDayWebAuth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.SecurePolicy =
             CookieSecurePolicy.SameAsRequest;
 
         options.ExpireTimeSpan = TimeSpan.FromHours(2);
-
-        // Return API status codes instead of login redirects
-        options.Events.OnRedirectToLogin = context =>
-        {
-            context.Response.StatusCode = 401;
-            return Task.CompletedTask;
-        };
-
-        options.Events.OnRedirectToAccessDenied = context =>
-        {
-            context.Response.StatusCode = 403;
-            return Task.CompletedTask;
-        };
     });
 
-// Role-based authorization
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Swagger in Development
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
-// Temporarily disabled for local HTTP testing
-// app.UseHttpsRedirection();
-
+app.UseStaticFiles();
+app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
