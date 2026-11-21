@@ -1,0 +1,269 @@
+# RaceDay – PROG6212 Portfolio of Evidence
+
+## Project Overview
+
+RaceDay is an ASP.NET Core Web API developed as part of the PROG6212 Portfolio of Evidence.
+
+The application provides a race event management system where Organisers can create and manage running, walking and cycling events, while Participants can enrol in events and view their results.
+
+The project uses C#, .NET 8, Entity Framework Core, SQL Server and Swagger.
+
+## Technologies Used
+
+- C# and ASP.NET Core Web API (.NET 8)
+- Microsoft SQL Server / SQL Server LocalDB
+- SQL Server Management Studio (SSMS)
+- Entity Framework Core
+- Swagger / OpenAPI
+- xUnit for automated testing
+- GitHub for version control
+- GitHub Actions for CI/CD
+- Visual Studio 2026
+
+## User Roles
+
+### Organiser
+
+An Organiser can:
+
+- Register and log in.
+- View and update their own profile.
+- Create, view, update and delete their own events.
+- Create and manage event categories.
+- View participants enrolled in their own events.
+- Record and update race results.
+
+### Participant
+
+A Participant can:
+
+- Register and log in.
+- View and update their own profile.
+- View available events and categories after logging in.
+- Enrol in an event.
+- View and cancel their own enrolments.
+- View their race results.
+
+Role-based authorisation ensures that users can only access permitted functionality.
+
+## Project Setup Instructions
+
+### 1. Clone the Repository
+
+Clone the project from:
+
+https://github.com/Sothoane-Mamello/RaceDay-PROG6212-POE
+
+Or run:
+
+```bash
+git clone https://github.com/Sothoane-Mamello/RaceDay-PROG6212-POE.git
+```
+
+### 2. Open the Solution
+
+Navigate to the `RaceDay` folder and open:
+
+`RaceDay.slnx`
+
+Open the solution using Visual Studio 2026 with .NET 8 development support.
+
+### 3. Configure SQL Server
+
+Install SQL Server LocalDB or a compatible SQL Server instance.
+
+The project uses a database named:
+
+`RaceDayDB`
+
+Update the connection string in `RaceDay.Api/appsettings.json` to match your SQL Server instance.
+
+For LocalDB, the connection string can be configured as:
+
+```json
+{
+  "ConnectionStrings": {
+    "RaceDayConnection": "Server=(localdb)\\MSSQLLocalDB;Database=RaceDayDB;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+```
+
+Use the existing configuration file and preserve its other settings.
+
+### 4. Create the Database
+
+Connect to SQL Server using SQL Server Management Studio.
+
+The database tables are managed through Entity Framework Core migrations.
+
+After confirming that the connection string is correct, run the existing migrations:
+
+```powershell
+dotnet ef database update --project RaceDay.Api --startup-project RaceDay.Api
+```
+
+Run this command from the `RaceDay` solution directory with the EF Core command-line tool installed.
+
+Any separate Part 1 SQL schema or sample-data script is provided as supporting database documentation in the repository's `docs` folder, where available.
+
+### 5. Run the Application
+
+Open Developer PowerShell in Visual Studio.
+
+From the `RaceDay` solution directory, run:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT="Development"
+dotnet run --project RaceDay.Api --no-launch-profile --urls "http://127.0.0.1:5067"
+```
+
+Open Swagger in a browser:
+
+http://127.0.0.1:5067/swagger
+
+Swagger provides an interface for testing the API endpoints.
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register an account |
+| POST | `/api/auth/login` | Log in |
+| POST | `/api/auth/logout` | Log out |
+| GET | `/api/auth/me` | View authenticated user |
+
+### Events
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/events` | View events |
+| GET | `/api/events/{eventId}` | View an event |
+| POST | `/api/events` | Create an event |
+| PUT | `/api/events/{eventId}` | Update an event |
+| DELETE | `/api/events/{eventId}` | Delete an event |
+
+### Categories
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/categories/event/{eventId}` | View categories |
+| POST | `/api/categories/event/{eventId}` | Create category |
+| PUT | `/api/categories/{id}` | Update category |
+| DELETE | `/api/categories/{id}` | Delete category |
+
+### Enrolments
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/enrolments` | Enrol in an event |
+| GET | `/api/enrolments/my` | View own enrolments |
+| GET | `/api/enrolments/event/{eventId}` | View event enrolments |
+| DELETE | `/api/enrolments/{id}` | Cancel enrolment |
+
+### Results
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/results` | Record a race result |
+| GET | `/api/results/my` | View personal results |
+| GET | `/api/results/event/{eventId}` | View event results |
+| PUT | `/api/results/{id}` | Update a result |
+
+### Profiles
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/profile` | View own profile |
+| PUT | `/api/profile` | Update own profile |
+
+## Example API Workflow
+
+The following example demonstrates the expected application workflow:
+
+1. Register an Organiser account.
+2. Log in as the Organiser.
+3. Create a running event.
+4. Create a 10 km event category.
+5. Log out and register or log in as a Participant.
+6. Enrol in the event and choose the category.
+7. Log in as the Organiser and record a finishing time.
+8. Log in as the Participant and view the result.
+
+The API uses authentication and role-based restrictions to protect the respective operations.
+
+## Automated Testing
+
+The project includes a separate xUnit test project:
+
+`RaceDay.Api.Tests`
+
+The automated validation tests cover:
+
+- Registration email validation
+- Registration password validation
+- Valid registration data
+- Negative event distance
+- Unsupported event types
+- Valid event data
+- Invalid event IDs
+- Invalid category IDs
+- Invalid finishing times
+- Valid race results
+
+Run all automated tests using:
+
+```powershell
+dotnet test RaceDay/RaceDay.slnx
+```
+
+Run this command from the repository root.
+
+The validation test suite was successfully executed locally with 10 tests passing and 0 failures.
+
+## GitHub Actions CI/CD
+
+The repository includes an automated CI/CD workflow:
+
+`.github/workflows/dotnet-ci.yml`
+
+The workflow automatically:
+
+1. Checks out the repository.
+2. Installs the .NET 8 SDK.
+3. Restores project dependencies.
+4. Builds the solution.
+5. Executes automated tests.
+
+GitHub Actions workflow:
+
+https://github.com/Sothoane-Mamello/RaceDay-PROG6212-POE/actions
+
+### Successful CI/CD Build Evidence
+
+**INSERT SCREENSHOT OF SUCCESSFUL GREEN GITHUB ACTIONS BUILD HERE**
+
+## GitHub Version Control
+
+The project is maintained through GitHub with commits documenting actual development work, including application setup, database integration, authentication, event management, enrolments, results, profile functionality, testing and CI/CD configuration.
+
+Repository:
+
+https://github.com/Sothoane-Mamello/RaceDay-PROG6212-POE
+
+## Video Presentation
+
+The video demonstrates the running application, its code structure, database connection, authentication, organiser and participant functionality, Swagger API testing, automated tests and CI/CD workflow.
+
+**YouTube demonstration:** INSERT UNLISTED YOUTUBE VIDEO URL HERE
+
+## AI Tool Disclosure
+
+AI assistance was used during parts of the development process for guidance, code suggestions, troubleshooting, testing explanations and documentation support. The project was implemented and tested in Visual Studio, Swagger, SQL Server and GitHub.
+
+## Conclusion
+
+RaceDay demonstrates the development of an ASP.NET Core RESTful API with SQL Server integration, user authentication, role-based access, event management, participant enrolments and race results.
+
+The project also incorporates automated testing, version control and GitHub Actions CI/CD to support maintainability and development quality.
